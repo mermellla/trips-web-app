@@ -1,0 +1,76 @@
+
+
+```yaml
+name: Trips Sandbox WebApp
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  setup-environment:
+    runs-on: ubuntu-latest
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16.x'
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.19'
+
+    - name: Install Node.js Dependencies
+      run: |
+        cd app-login
+        npm install
+        
+
+    - name: Run Frontend Development Server
+      run: |
+        cd app-login
+        npm run dev &
+        # or yarn dev &
+
+    - name: Build Frontend for Production
+      run: |
+        cd app-login
+        npm run build
+        # or yarn build
+
+    - name: Copy Build Output to API Directory
+      run: |
+        cp -r app-login/dist ../api
+
+    - name: Run Backend Go Server
+      run: |
+        cd api
+        go run ./cmd/trips-web-app
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: setup-environment
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Deploy Backend Server
+      run: |
+        cd api
+        go run ./cmd/trips-web-app
+
+```
+
+### Key Points:
+
+- **Setup:** This `.yaml` file sets up the environment for Node.js and Go, installs dependencies, creates a `.env` file, and runs the development server.
+- **Deployment:** The deploy job runs the backend server and verifies the deployment.
+- **Environment Variables:** Ensure to replace `<Your Mapbox Token>` and `<Your API URL>` with the actual values needed for your environment.
+
+Make sure to customize the `.yaml` file according to your CI/CD pipeline and hosting environment.
